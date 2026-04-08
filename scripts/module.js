@@ -24,7 +24,7 @@ Hooks.once("ready", () => {
 function registerSidebarTab() {
   CONFIG.ui[TAB_NAME] = ActiveEffectsSidebarTab;
   foundry.applications.sidebar.Sidebar.TABS[TAB_NAME] = {
-    icon: "fa-solid fa-wand-magic-sparkles",
+    icon: "aem-sidebar-icon",
     label: "AEM.SidebarTitle",
     tooltip: "AEM.SidebarTitle"
   };

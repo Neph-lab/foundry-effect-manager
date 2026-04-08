@@ -158,3 +158,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+#sidebar #sidebar-tabs [data-tab="activeEffects"].aem-sidebar-icon {
+  background-image: url("rolling-energy-black.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem 1.25rem;
+}
+
+body.theme-dark #sidebar #sidebar-tabs [data-tab="activeEffects"].aem-sidebar-icon {
+  background-image: url("rolling-energy-white.svg");
+}
+
