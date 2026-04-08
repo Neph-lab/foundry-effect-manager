@@ -8,12 +8,12 @@ import {
 import { ActiveEffectTemplateSheet } from "./effect-sheet.js";
 import { getEffects, getExpandedFolders, getFolders, setEffects, setExpandedFolders, setFolders } from "./store.js";
 import {
+  buildTree,
   isFolderDescendant,
   localize,
   nextSortValue,
   sortByOrder,
-  sortRecord,
-  buildTree
+  sortRecord
 } from "./helpers.js";
 
 const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
@@ -41,10 +41,35 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   constructor(options = {}) {
     super(options);
     this.search = "";
+    this.searchMode = "name";
+    this.sortMode = "manual";
   }
 
   get title() {
     return localize("AEM.SidebarTitle");
+  }
+
+  _getEntryContextOptions() {
+    return [{
+      label: "AEM.DeleteEffect",
+      icon: "fa-solid fa-trash",
+      visible: () => game.user.isGM,
+      onClick: async (_event, target) => this.#deleteEffect(target.closest("[data-entry-id]")?.dataset.entryId)
+    }];
+  }
+
+  _getFolderContextOptions() {
+    return [{
+      label: "AEM.EditFolder",
+      icon: "fa-solid fa-pen",
+      visible: () => game.user.isGM,
+      onClick: async (_event, target) => this.#editFolder(target.closest("[data-folder-id]")?.dataset.folderId)
+    }, {
+      label: "AEM.DeleteFolder",
+      icon: "fa-solid fa-trash",
+      visible: () => game.user.isGM,
+      onClick: async (_event, target) => this.#deleteFolder(target.closest("[data-folder-id]")?.dataset.folderId)
+    }];
   }
 
   async _prepareContext() {
@@ -52,76 +77,135 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
       folders: getFolders(),
       effects: getEffects(),
       expandedFolders: getExpandedFolders(),
-      search: this.search
+      search: this.search,
+      searchMode: this.searchMode,
+      sortMode: this.sortMode
     });
 
     return {
-      active: this.active,
       canManage: game.user.isGM,
       hasContent: !!(tree.rootFolders.length || tree.rootEffects.length),
       rootFolders: tree.rootFolders,
       rootEffects: tree.rootEffects,
       search: this.search,
-      tabName: this.tabName
+      searchMode: this.#getSearchModeContext(),
+      sortMode: this.#getSortModeContext(),
+      folderIcon: CONFIG.Folder?.sidebarIcon ?? "fa-solid fa-folder",
+      effectCreateIcon: "fa-solid fa-arrows-spin"
     };
+  }
+
+  async _onFirstRender(context, options) {
+    await super._onFirstRender(context, options);
+    this._createContextMenu(this._getFolderContextOptions, ".folder .folder-header", {
+      fixed: true,
+      hookName: "getFolderContextOptions",
+      parentClassHooks: false
+    });
+    this._createContextMenu(this._getEntryContextOptions, ".directory-item[data-entry-id]", {
+      fixed: true,
+      hookName: "getActiveEffectContextOptions",
+      parentClassHooks: false
+    });
   }
 
   async _onRender(context, options) {
     await super._onRender(context, options);
 
     const element = this.element;
+    const canManualSort = game.user.isGM && this.sortMode === "manual";
+
     element.querySelector("[data-action='create-effect']")?.addEventListener("click", () => this.#openEffectSheet());
     element.querySelector("[data-action='create-folder']")?.addEventListener("click", () => this.#createFolder());
+    element.querySelector("[data-action='toggle-search-mode']")?.addEventListener("click", () => this.#toggleSearchMode());
+    element.querySelector("[data-action='toggle-sort-mode']")?.addEventListener("click", () => this.#toggleSortMode());
+    element.querySelector("[data-action='collapse-folders']")?.addEventListener("click", () => this.#collapseFolders());
 
-    const searchInput = element.querySelector("[name='aem-search']");
+    const searchInput = element.querySelector("[name='search']");
     searchInput?.addEventListener("input", foundry.utils.debounce(async (event) => {
       this.search = event.currentTarget.value ?? "";
       await this.render({ force: true });
     }, 100));
 
-    for (const toggle of element.querySelectorAll("[data-action='toggle-folder']")) {
-      toggle.addEventListener("click", (event) => this.#toggleFolder(event.currentTarget.dataset.folderId));
+    for (const header of element.querySelectorAll(".folder-header[data-action='toggle-folder']")) {
+      header.addEventListener("click", (event) => this.#toggleFolder(event.currentTarget.closest("[data-folder-id]")?.dataset.folderId));
     }
 
     for (const button of element.querySelectorAll("[data-action='create-effect-in-folder']")) {
-      button.addEventListener("click", (event) => this.#openEffectSheet(event.currentTarget.dataset.folderId));
-    }
-
-    for (const button of element.querySelectorAll("[data-action='create-subfolder']")) {
-      button.addEventListener("click", (event) => this.#createFolder(event.currentTarget.dataset.folderId));
-    }
-
-    for (const button of element.querySelectorAll("[data-action='edit-folder']")) {
-      button.addEventListener("click", (event) => this.#editFolder(event.currentTarget.dataset.folderId));
-    }
-
-    for (const button of element.querySelectorAll("[data-action='delete-folder']")) {
-      button.addEventListener("click", (event) => this.#deleteFolder(event.currentTarget.dataset.folderId));
-    }
-
-    for (const row of element.querySelectorAll(".aem-entry")) {
-      row.addEventListener("click", () => this.#openEffectSheet(null, row.dataset.effectId));
-      row.addEventListener("dragstart", (event) => this.#onEffectDragStart(event, row.dataset.effectId));
-    }
-
-    for (const button of element.querySelectorAll("[data-action='delete-effect']")) {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
-        this.#deleteEffect(event.currentTarget.dataset.effectId);
+        this.#openEffectSheet(event.currentTarget.closest("[data-folder-id]")?.dataset.folderId);
       });
     }
 
+    for (const button of element.querySelectorAll("[data-action='create-subfolder']")) {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.#createFolder(event.currentTarget.closest("[data-folder-id]")?.dataset.folderId);
+      });
+    }
+
+    for (const row of element.querySelectorAll(".directory-item[data-entry-id]")) {
+      row.addEventListener("click", () => this.#openEffectSheet(null, row.dataset.entryId));
+      row.draggable = canManualSort;
+      if (canManualSort) row.addEventListener("dragstart", (event) => this.#onEffectDragStart(event, row.dataset.entryId));
+    }
+
     if (game.user.isGM) {
-      for (const folder of element.querySelectorAll(".aem-folder")) {
-        folder.setAttribute("draggable", "true");
-        folder.addEventListener("dragstart", (event) => this.#onFolderDragStart(event, folder.dataset.folderId));
+      for (const folder of element.querySelectorAll(".directory-item.folder")) {
+        folder.draggable = canManualSort;
+        if (canManualSort) folder.addEventListener("dragstart", (event) => this.#onFolderDragStart(event, folder.dataset.folderId));
       }
 
-      for (const target of element.querySelectorAll(".aem-drop-target")) {
-        target.addEventListener("dragover", this.#onDragOver.bind(this));
-        target.addEventListener("drop", this.#onDrop.bind(this));
+      if (canManualSort) {
+        for (const target of element.querySelectorAll(".aem-drop-target")) {
+          target.addEventListener("dragover", this.#onDragOver.bind(this));
+          target.addEventListener("drop", this.#onDrop.bind(this));
+        }
       }
     }
+  }
+
+  #getSearchModeContext() {
+    return this.searchMode === "full"
+      ? {
+        icon: "fa-solid fa-file-magnifying-glass",
+        label: "AEM.SearchModeFull",
+        placeholder: localize("AEM.SearchPlaceholderFull")
+      }
+      : {
+        icon: "fa-solid fa-signature",
+        label: "AEM.SearchModeName",
+        placeholder: localize("AEM.SearchPlaceholderName")
+      };
+  }
+
+  #getSortModeContext() {
+    return this.sortMode === "alpha"
+      ? {
+        icon: "fa-solid fa-arrow-down-a-z",
+        label: "AEM.SortAlpha"
+      }
+      : {
+        icon: "fa-solid fa-arrow-down-short-wide",
+        label: "AEM.SortManual"
+      };
+  }
+
+  async #toggleSearchMode() {
+    this.searchMode = this.searchMode === "name" ? "full" : "name";
+    await this.render({ force: true });
+  }
+
+  async #toggleSortMode() {
+    this.sortMode = this.sortMode === "manual" ? "alpha" : "manual";
+    await this.render({ force: true });
+  }
+
+  async #collapseFolders() {
+    const expanded = Object.fromEntries(getFolders().map((folder) => [folder.id, false]));
+    await setExpandedFolders(expanded);
+    await this.render({ force: true });
   }
 
   async #openEffectSheet(folderId = null, effectId = null) {
@@ -130,6 +214,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #toggleFolder(folderId) {
+    if (!folderId) return;
     const expanded = getExpandedFolders();
     expanded[folderId] = !(expanded[folderId] ?? true);
     await setExpandedFolders(expanded);
@@ -138,7 +223,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
 
   async #createFolder(parentFolderId = null) {
     if (!game.user.isGM) return;
-    const folder = await this.#promptFolder(createDefaultFolder({ folder: parentFolderId }));
+    const folder = await this.#promptFolder(createDefaultFolder({ folder: parentFolderId || null }));
     if (!folder) return;
 
     const folders = getFolders();
@@ -150,7 +235,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #editFolder(folderId) {
-    if (!game.user.isGM) return;
+    if (!game.user.isGM || !folderId) return;
     const folders = getFolders();
     const folder = folders.find((entry) => entry.id === folderId);
     if (!folder) return;
@@ -165,7 +250,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #deleteFolder(folderId) {
-    if (!game.user.isGM) return;
+    if (!game.user.isGM || !folderId) return;
     const folders = getFolders();
     const folder = folders.find((entry) => entry.id === folderId);
     if (!folder) return;
@@ -177,7 +262,6 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     if (!confirmed) return;
 
     const effects = getEffects();
-
     for (const childFolder of folders) {
       if (childFolder.folder === folderId) childFolder.folder = folder.folder ?? null;
     }
@@ -192,7 +276,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #deleteEffect(effectId) {
-    if (!game.user.isGM) return;
+    if (!game.user.isGM || !effectId) return;
     const effects = getEffects();
     const effect = effects.find((entry) => entry.id === effectId);
     if (!effect) return;
@@ -248,11 +332,11 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     if (!effect) return;
 
     event.stopPropagation();
-    event.dataTransfer.effectAllowed = game.user.isGM ? "copyMove" : "copy";
+    event.dataTransfer.effectAllowed = "copyMove";
     event.dataTransfer.setData("text/plain", JSON.stringify({
       type: DRAG_TYPE,
       effectId,
-      internal: game.user.isGM
+      internal: true
     }));
   }
 
@@ -267,12 +351,12 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
 
   async #onDrop(event) {
     event.preventDefault();
-    if (!game.user.isGM) return;
+    if (!game.user.isGM || this.sortMode !== "manual") return;
 
     const data = TextEditor.getDragEventData(event);
     const dropTarget = event.currentTarget;
     const targetFolderId = dropTarget.dataset.folderId || null;
-    const targetEffectId = dropTarget.dataset.effectId || null;
+    const targetEffectId = dropTarget.dataset.entryId || null;
     const sortBefore = dropTarget.dataset.sortBefore === "true";
 
     if (data.type === DRAG_TYPE && data.internal) {

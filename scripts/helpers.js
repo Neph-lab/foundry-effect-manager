@@ -36,13 +36,22 @@ export function sortByOrder(items) {
   });
 }
 
+export function sortAlphabetically(items) {
+  return [...items].sort((a, b) => {
+    const nameDelta = String(a.name ?? "").localeCompare(String(b.name ?? ""));
+    if (nameDelta !== 0) return nameDelta;
+    return (a.sort ?? 0) - (b.sort ?? 0);
+  });
+}
+
 export function nextSortValue(items) {
   if (!items.length) return SORT_DENSITY;
   return Math.max(...items.map((item) => item.sort ?? 0)) + SORT_DENSITY;
 }
 
-export function buildTree({ folders, effects, expandedFolders, search = "" }) {
+export function buildTree({ folders, effects, expandedFolders, search = "", searchMode = "name", sortMode = "manual" }) {
   const query = search.trim().toLowerCase();
+  const sorter = sortMode === "alpha" ? sortAlphabetically : sortByOrder;
   const foldersByParent = new Map();
   const effectsByFolder = new Map();
 
@@ -62,29 +71,32 @@ export function buildTree({ folders, effects, expandedFolders, search = "" }) {
 
   const effectMatches = (effect) => {
     if (!query) return true;
-    const haystack = [
-      effect.name,
-      effect.description,
-      effect.origin,
-      effect.changes?.map((change) => `${change.key} ${change.value}`).join(" ")
-    ]
+    const fields = searchMode === "full"
+      ? [
+        effect.name,
+        effect.description,
+        effect.origin,
+        effect.changes?.map((change) => `${change.key} ${change.value}`).join(" ")
+      ]
+      : [effect.name];
+
+    return fields
       .filter(Boolean)
       .join(" ")
-      .toLowerCase();
-    return haystack.includes(query);
+      .toLowerCase()
+      .includes(query);
   };
 
   const buildFolderNode = (folder, depth = 0) => {
-    const childFolders = sortByOrder(foldersByParent.get(folder.id) ?? [])
+    const childFolders = sorter(foldersByParent.get(folder.id) ?? [])
       .map((child) => buildFolderNode(child, depth + 1))
       .filter(Boolean);
 
-    const childEffects = sortByOrder(effectsByFolder.get(folder.id) ?? [])
+    const childEffects = sorter(effectsByFolder.get(folder.id) ?? [])
       .filter((effect) => effectMatches(effect))
       .map((effect) => ({
         ...effect,
-        depth: depth + 1,
-        preview: TextEditor.previewHTML(effect.description ?? "", 80)
+        depth: depth + 1
       }));
 
     const folderMatches = !query || String(folder.name ?? "").toLowerCase().includes(query);
@@ -99,16 +111,15 @@ export function buildTree({ folders, effects, expandedFolders, search = "" }) {
     };
   };
 
-  const rootFolders = sortByOrder(foldersByParent.get("root") ?? [])
+  const rootFolders = sorter(foldersByParent.get("root") ?? [])
     .map((folder) => buildFolderNode(folder, 0))
     .filter(Boolean);
 
-  const rootEffects = sortByOrder(effectsByFolder.get("root") ?? [])
+  const rootEffects = sorter(effectsByFolder.get("root") ?? [])
     .filter((effect) => effectMatches(effect))
     .map((effect) => ({
       ...effect,
-      depth: 0,
-      preview: TextEditor.previewHTML(effect.description ?? "", 80)
+      depth: 0
     }));
 
   return {
