@@ -25,7 +25,7 @@
       "path": "lang/en.json"
     }
   ],
-  "url": "https://github.com/Neph-lab/foundry-effect-manager",
+  "url": "https://raw.githubusercontent.com/Neph-lab/foundry-effect-manager",
   "manifest": "https://raw.githubusercontent.com/Neph-lab/foundry-effect-manager/main/module.json",
   "license": "MIT"
 }
