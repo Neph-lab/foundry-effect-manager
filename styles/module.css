@@ -1,4 +1,4 @@
-.foundry-effect-manager.aem-sidebar .aem-tab,
+.foundry-effect-manager.aem-sidebar,
 .foundry-effect-manager.aem-sheet {
   color: var(--color-text-primary);
 }
@@ -14,10 +14,12 @@
 .foundry-effect-manager .aem-header {
   padding: 0.5rem;
   border-bottom: 1px solid var(--color-border-secondary);
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .foundry-effect-manager .aem-header input[type="search"] {
-  flex: 1;
+  flex: 1 1 14rem;
 }
 
 .foundry-effect-manager .aem-header-actions {
@@ -28,6 +30,7 @@
 .foundry-effect-manager .aem-directory {
   overflow-y: auto;
   padding: 0.5rem;
+  flex: 1;
 }
 
 .foundry-effect-manager .aem-empty {
@@ -169,4 +172,3 @@
 body.theme-dark #sidebar #sidebar-tabs [data-tab="activeEffects"].aem-sidebar-icon {
   background-image: url("rolling-energy-white.svg");
 }
-

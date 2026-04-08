@@ -23,8 +23,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   static tabName = TAB_NAME;
 
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    classes: [MODULE_ID, "aem-sidebar"],
-    id: `${MODULE_ID}-sidebar`,
+    classes: [MODULE_ID, "aem-sidebar", "directory", "flexcol"],
     window: {
       icon: "fa-solid fa-wand-magic-sparkles",
       title: "AEM.SidebarTitle"
@@ -32,8 +31,9 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   });
 
   static PARTS = {
-    body: {
+    content: {
       template: "modules/foundry-effect-manager/templates/sidebar.hbs",
+      root: true,
       scrollable: [".aem-directory"]
     }
   };
