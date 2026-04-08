@@ -1,0 +1,137 @@
+<form class="aem-effect-form">
+  <input type="hidden" name="folder" value="{{effect.folder}}">
+
+  <section class="aem-sheet-grid">
+    <div class="form-group">
+      <label>{{localize "AEM.Name"}}</label>
+      <input type="text" name="name" value="{{effect.name}}" required>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "AEM.Image"}}</label>
+      <input type="text" name="img" value="{{effect.img}}">
+    </div>
+
+    <div class="form-group aem-span-two">
+      <label>{{localize "AEM.Description"}}</label>
+      <textarea name="description" rows="3">{{effect.description}}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "AEM.Type"}}</label>
+      <select name="type">
+        {{#each typeOptions as |option|}}
+          <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "AEM.ShowIcon"}}</label>
+      <select name="showIcon">
+        {{#each showIconOptions as |option|}}
+          <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "AEM.Tint"}}</label>
+      <input type="text" name="tint" value="{{effect.tint}}">
+    </div>
+
+    <div class="form-group">
+      <label>{{localize "AEM.Origin"}}</label>
+      <input type="text" name="origin" value="{{effect.origin}}">
+    </div>
+
+    <div class="form-group aem-checkbox-group">
+      <label>
+        <input type="checkbox" name="disabled" {{checked effect.disabled}}>
+        {{localize "AEM.Disabled"}}
+      </label>
+    </div>
+
+    <div class="form-group aem-checkbox-group">
+      <label>
+        <input type="checkbox" name="transfer" {{checked effect.transfer}}>
+        {{localize "AEM.Transfer"}}
+      </label>
+    </div>
+
+    <div class="form-group aem-span-two">
+      <label>{{localize "AEM.Statuses"}}</label>
+      <input type="text" name="statuses" value="{{effect.statusesText}}" placeholder="{{localize 'AEM.StatusesHint'}}">
+    </div>
+  </section>
+
+  <section class="aem-sheet-grid">
+    <h3 class="aem-span-two">{{localize "AEM.Duration"}}</h3>
+    <div class="form-group">
+      <label>{{localize "AEM.DurationSeconds"}}</label>
+      <input type="number" step="any" name="duration.seconds" value="{{effect.duration.seconds}}">
+    </div>
+    <div class="form-group">
+      <label>{{localize "AEM.DurationRounds"}}</label>
+      <input type="number" step="any" name="duration.rounds" value="{{effect.duration.rounds}}">
+    </div>
+    <div class="form-group">
+      <label>{{localize "AEM.DurationTurns"}}</label>
+      <input type="number" step="any" name="duration.turns" value="{{effect.duration.turns}}">
+    </div>
+  </section>
+
+  <section class="aem-sheet-grid">
+    <h3 class="aem-span-two">{{localize "AEM.Start"}}</h3>
+    <div class="form-group">
+      <label>{{localize "AEM.StartTime"}}</label>
+      <input type="number" step="any" name="start.time" value="{{effect.start.time}}">
+    </div>
+    <div class="form-group">
+      <label>{{localize "AEM.StartRound"}}</label>
+      <input type="number" step="1" name="start.round" value="{{effect.start.round}}">
+    </div>
+    <div class="form-group">
+      <label>{{localize "AEM.StartTurn"}}</label>
+      <input type="number" step="1" name="start.turn" value="{{effect.start.turn}}">
+    </div>
+  </section>
+
+  <section class="aem-changes">
+    <div class="aem-section-header">
+      <h3>{{localize "AEM.Changes"}}</h3>
+      <button type="button" data-action="add-change">{{localize "AEM.AddChange"}}</button>
+    </div>
+
+    {{#if effect.changes.length}}
+      <ol class="aem-change-list">
+        {{#each effect.changes as |change index|}}
+          <li class="aem-change-row">
+            <input type="text" name="change-key" value="{{change.key}}" placeholder="{{localize 'AEM.ChangeKey'}}">
+            <select name="change-mode">
+              {{#each change.modeOptions as |option|}}
+                <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+              {{/each}}
+            </select>
+            <input type="text" name="change-value" value="{{change.value}}" placeholder="{{localize 'AEM.ChangeValue'}}">
+            <input type="number" step="1" name="change-priority" value="{{change.priority}}" placeholder="{{localize 'AEM.ChangePriority'}}">
+            <select name="change-phase">
+              {{#each change.phaseOptions as |option|}}
+                <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+              {{/each}}
+            </select>
+            <button type="button" data-action="remove-change" data-index="{{index}}" aria-label="{{localize 'AEM.Cancel'}}">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </li>
+        {{/each}}
+      </ol>
+    {{else}}
+      <p class="hint">{{localize "AEM.EmptyHint"}}</p>
+    {{/if}}
+  </section>
+
+  <footer class="aem-sheet-footer">
+    <button type="submit">{{localize "AEM.Save"}}</button>
+  </footer>
+</form>

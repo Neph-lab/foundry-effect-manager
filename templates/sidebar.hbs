@@ -1,0 +1,86 @@
+{{#*inline "effectRow"}}
+  <li class="directory-item document aem-entry aem-drop-target" data-effect-id="{{effect.id}}" data-folder-id="{{effect.folder}}" data-sort-before="true" draggable="true">
+    <div class="aem-entry-main" style="padding-inline-start: calc({{effect.depth}} * 1rem);">
+      <img class="aem-entry-icon" src="{{effect.img}}" alt="{{effect.name}}">
+      <div class="aem-entry-text">
+        <h4>{{effect.name}}</h4>
+        {{#if effect.preview}}
+          <p class="aem-entry-preview">{{{effect.preview}}}</p>
+        {{/if}}
+      </div>
+    </div>
+    {{#if @root.canManage}}
+      <button type="button" class="aem-inline-button" data-action="delete-effect" data-effect-id="{{effect.id}}" aria-label="{{localize 'AEM.DeleteEffect'}}">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    {{/if}}
+  </li>
+{{/inline}}
+
+{{#*inline "folderRow"}}
+  <li class="directory-item folder aem-folder" data-folder-id="{{folder.id}}">
+    <header class="aem-folder-header aem-drop-target" data-folder-id="{{folder.id}}">
+      <button type="button" class="aem-folder-toggle" data-action="toggle-folder" data-folder-id="{{folder.id}}" aria-label="{{folder.name}}">
+        <i class="fa-solid {{#if folder.expanded}}fa-folder-open{{else}}fa-folder{{/if}}"></i>
+      </button>
+      <span class="aem-folder-name" style="--folder-color: {{folder.color}}; padding-inline-start: calc({{folder.depth}} * 1rem);">{{folder.name}}</span>
+      {{#if @root.canManage}}
+        <div class="aem-folder-actions">
+          <button type="button" class="aem-inline-button" data-action="create-effect-in-folder" data-folder-id="{{folder.id}}" aria-label="{{localize 'AEM.NewEffect'}}">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </button>
+          <button type="button" class="aem-inline-button" data-action="create-subfolder" data-folder-id="{{folder.id}}" aria-label="{{localize 'AEM.NewFolder'}}">
+            <i class="fa-solid fa-folder-plus"></i>
+          </button>
+          <button type="button" class="aem-inline-button" data-action="edit-folder" data-folder-id="{{folder.id}}" aria-label="{{localize 'AEM.EditFolder'}}">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <button type="button" class="aem-inline-button" data-action="delete-folder" data-folder-id="{{folder.id}}" aria-label="{{localize 'AEM.DeleteFolder'}}">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      {{/if}}
+    </header>
+
+    {{#if folder.expanded}}
+      <ol class="directory-list aem-subdirectory aem-drop-target" data-folder-id="{{folder.id}}">
+        {{#each folder.folders as |childFolder|}}
+          {{> folderRow folder=childFolder}}
+        {{/each}}
+        {{#each folder.effects as |effect|}}
+          {{> effectRow effect=effect}}
+        {{/each}}
+      </ol>
+    {{/if}}
+  </li>
+{{/inline}}
+
+<section class="tab aem-tab {{#if active}}active{{/if}}" data-group="primary" data-tab="{{tabName}}">
+  <div class="aem-header">
+    <input type="search" name="aem-search" value="{{search}}" placeholder="{{localize 'AEM.Search'}}">
+    {{#if canManage}}
+      <div class="aem-header-actions">
+        <button type="button" data-action="create-effect">{{localize "AEM.NewEffect"}}</button>
+        <button type="button" data-action="create-folder">{{localize "AEM.NewFolder"}}</button>
+      </div>
+    {{/if}}
+  </div>
+
+  <div class="aem-directory aem-drop-target" data-folder-id="">
+    {{#if hasContent}}
+      <ol class="directory-list">
+        {{#each rootFolders as |folder|}}
+          {{> folderRow folder=folder}}
+        {{/each}}
+        {{#each rootEffects as |effect|}}
+          {{> effectRow effect=effect}}
+        {{/each}}
+      </ol>
+    {{else}}
+      <div class="aem-empty">
+        <p>{{localize "AEM.Empty"}}</p>
+        <p>{{localize "AEM.EmptyHint"}}</p>
+      </div>
+    {{/if}}
+  </div>
+</section>
