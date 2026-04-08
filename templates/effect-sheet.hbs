@@ -103,32 +103,37 @@
       <button type="button" data-action="add-change">{{localize "AEM.AddChange"}}</button>
     </div>
 
-    {{#if effect.changes.length}}
-      <ol class="aem-change-list">
-        {{#each effect.changes as |change index|}}
-          <li class="aem-change-row">
-            <input type="text" name="change-key" value="{{change.key}}" placeholder="{{localize 'AEM.ChangeKey'}}">
-            <select name="change-mode">
-              {{#each change.modeOptions as |option|}}
-                <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
-              {{/each}}
-            </select>
-            <input type="text" name="change-value" value="{{change.value}}" placeholder="{{localize 'AEM.ChangeValue'}}">
-            <input type="number" step="1" name="change-priority" value="{{change.priority}}" placeholder="{{localize 'AEM.ChangePriority'}}">
-            <select name="change-phase">
-              {{#each change.phaseOptions as |option|}}
-                <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
-              {{/each}}
-            </select>
-            <button type="button" data-action="remove-change" data-index="{{index}}" aria-label="{{localize 'AEM.Cancel'}}">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </li>
-        {{/each}}
-      </ol>
-    {{else}}
-      <p class="hint">{{localize "AEM.EmptyHint"}}</p>
-    {{/if}}
+    <div class="aem-change-row aem-change-header" aria-hidden="true">
+      <span>{{localize "AEM.ChangeKey"}}</span>
+      <span>{{localize "AEM.ChangeMode"}}</span>
+      <span>{{localize "AEM.ChangeValue"}}</span>
+      <span>{{localize "AEM.ChangePriority"}}</span>
+      <span>{{localize "AEM.ChangePhase"}}</span>
+      <span></span>
+    </div>
+
+    <ol class="aem-change-list">
+      {{#each effect.changes as |change index|}}
+        <li class="aem-change-row">
+          <input type="text" name="change-key" value="{{change.key}}" placeholder="{{localize 'AEM.ChangeKey'}}">
+          <select name="change-mode">
+            {{#each change.modeOptions as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+            {{/each}}
+          </select>
+          <input type="text" name="change-value" value="{{change.value}}" placeholder="{{localize 'AEM.ChangeValue'}}">
+          <input type="number" step="1" name="change-priority" value="{{change.priority}}" placeholder="{{localize 'AEM.ChangePriority'}}">
+          <select name="change-phase">
+            {{#each change.phaseOptions as |option|}}
+              <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+            {{/each}}
+          </select>
+          <button type="button" data-action="remove-change" data-index="{{index}}" aria-label="{{localize 'AEM.Cancel'}}">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </li>
+      {{/each}}
+    </ol>
   </section>
 
   <footer class="aem-sheet-footer">

@@ -150,6 +150,13 @@
   align-items: center;
 }
 
+.foundry-effect-manager .aem-change-header {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-12);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
 .foundry-effect-manager .aem-sheet-footer {
   justify-content: flex-end;
   margin-top: 1rem;

@@ -41,9 +41,26 @@ export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(Applic
     this.effect = createDefaultEffect();
   }
 
+  #createBlankChange() {
+    return {
+      key: "",
+      mode: CONST.ACTIVE_EFFECT_MODES.ADD ?? 2,
+      value: "",
+      priority: null,
+      phase: ""
+    };
+  }
+
+  #withDisplayChanges(effect) {
+    return {
+      ...effect,
+      changes: effect.changes?.length ? effect.changes : [this.#createBlankChange()]
+    };
+  }
+
   async _prepareContext() {
     const existing = this.effectId ? getEffects().find((effect) => effect.id === this.effectId) : null;
-    this.effect = createDefaultEffect(existing ?? { folder: this.folderId });
+    this.effect = this.#withDisplayChanges(createDefaultEffect(existing ?? { folder: this.folderId }));
 
     const markSelected = (options, current) => options.map((option) => ({
       ...option,
@@ -109,14 +126,8 @@ export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(Applic
     event.preventDefault();
     const form = this.element.querySelector("form");
     const effect = this.#collectEffectData(form);
-    effect.changes.push({
-      key: "",
-      mode: CONST.ACTIVE_EFFECT_MODES.ADD ?? 2,
-      value: "",
-      priority: null,
-      phase: ""
-    });
-    this.effect = effect;
+    effect.changes.push(this.#createBlankChange());
+    this.effect = this.#withDisplayChanges(effect);
     await this.render({ force: true });
   }
 
@@ -126,7 +137,7 @@ export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(Applic
     const form = this.element.querySelector("form");
     const effect = this.#collectEffectData(form);
     effect.changes.splice(index, 1);
-    this.effect = effect;
+    this.effect = this.#withDisplayChanges(effect);
     await this.render({ force: true });
   }
 
