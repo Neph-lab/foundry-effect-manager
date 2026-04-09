@@ -278,7 +278,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   async #deleteEffect(effectId) {
     if (!game.user.isGM || !effectId) return;
     const effects = getEffects();
-    const effect = effects.find((entry) => entry.id === effectId);
+    const effect = effects.find((entry) => entry._id === effectId);
     if (!effect) return;
 
     const confirmed = await DialogV2.confirm({
@@ -287,7 +287,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     });
     if (!confirmed) return;
 
-    await setEffects(effects.filter((entry) => entry.id !== effectId));
+    await setEffects(effects.filter((entry) => entry._id !== effectId));
     ui.notifications.info(localize("AEM.EffectDeleted"));
     Hooks.callAll(`${MODULE_ID}.refresh`);
   }
@@ -328,7 +328,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   #onEffectDragStart(event, effectId) {
-    const effect = getEffects().find((entry) => entry.id === effectId);
+    const effect = getEffects().find((entry) => entry._id === effectId);
     if (!effect) return;
 
     event.stopPropagation();
@@ -371,22 +371,22 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
 
   async #moveEffect(effectId, { targetFolderId = null, targetEffectId = null, sortBefore = false } = {}) {
     const effects = getEffects();
-    const effect = effects.find((entry) => entry.id === effectId);
+    const effect = effects.find((entry) => entry._id === effectId);
     if (!effect) return;
 
     if (!targetEffectId) {
       effect.folder = targetFolderId;
-      effect.sort = nextSortValue(effects.filter((entry) => entry.id !== effect.id && (entry.folder ?? null) === targetFolderId));
+      effect.sort = nextSortValue(effects.filter((entry) => entry._id !== effect._id && (entry.folder ?? null) === targetFolderId));
       await setEffects(effects);
       Hooks.callAll(`${MODULE_ID}.refresh`);
       return;
     }
 
-    const target = effects.find((entry) => entry.id === targetEffectId);
-    if (!target || target.id === effect.id) return;
+    const target = effects.find((entry) => entry._id === targetEffectId);
+    if (!target || target._id === effect._id) return;
 
     effect.folder = target.folder ?? null;
-    const siblings = sortByOrder(effects.filter((entry) => (entry.folder ?? null) === (target.folder ?? null) && entry.id !== effect.id));
+    const siblings = sortByOrder(effects.filter((entry) => (entry.folder ?? null) === (target.folder ?? null) && entry._id !== effect._id));
     sortRecord(effects, effect, siblings, target, { sortBefore });
     await setEffects(effects);
     Hooks.callAll(`${MODULE_ID}.refresh`);

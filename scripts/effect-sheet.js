@@ -1,119 +1,122 @@
 import { MODULE_ID, createDefaultEffect } from "./constants.js";
+import { localize, nextSortValue } from "./helpers.js";
 import { getEffects, setEffects } from "./store.js";
-import {
-  getActiveEffectModeOptions,
-  getActiveEffectPhaseOptions,
-  getActiveEffectTypeOptions,
-  getShowIconOptions,
-  localize,
-  nextSortValue,
-  normalizeStatuses,
-  numericOrNull,
-  stringOrEmpty
-} from "./helpers.js";
 
-const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const { ActiveEffectConfig } = foundry.applications.sheets;
+const { FormDataExtended } = foundry.applications.ux;
 
-export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(ApplicationV2) {
+export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    classes: [MODULE_ID, "aem-sheet"],
-    tag: "section",
+    classes: [...super.DEFAULT_OPTIONS.classes, MODULE_ID, "aem-sheet"],
     window: {
-      title: "AEM.EffectSheetTitle",
-      resizable: true
+      title: "AEM.EffectSheetTitle"
     },
+    actions: {
+      addChange: ActiveEffectTemplateSheet.#onAddChange,
+      deleteChange: ActiveEffectTemplateSheet.#onDeleteChange
+    },
+    sheetConfig: false,
+    ownershipConfig: false,
     position: {
-      width: 720,
+      width: 560,
       height: 760
     }
-  });
+  }, { inplace: false });
 
   static PARTS = {
-    body: {
-      template: "modules/foundry-effect-manager/templates/effect-sheet.hbs"
-    }
+    header: { template: "templates/sheets/active-effect/header.hbs" },
+    tabs: { template: "templates/generic/tab-navigation.hbs" },
+    details: {
+      template: "modules/foundry-effect-manager/templates/effect-sheet-details.hbs",
+      scrollable: [""]
+    },
+    duration: {
+      template: "modules/foundry-effect-manager/templates/effect-sheet-duration.hbs"
+    },
+    changes: {
+      template: "templates/sheets/active-effect/changes.hbs",
+      templates: ["templates/sheets/active-effect/change.hbs"],
+      scrollable: ["ol[data-changes]"]
+    },
+    footer: { template: "templates/generic/form-footer.hbs" }
   };
 
   constructor({ effectId = null, folderId = null } = {}) {
-    super();
-    this.effectId = effectId;
-    this.folderId = folderId;
-    this.effect = createDefaultEffect();
+    const existing = effectId ? getEffects().find((effect) => effect._id === effectId) : null;
+    const source = createDefaultEffect(existing ?? { folder: folderId ?? null });
+    const temporarySource = foundry.utils.deepClone(source);
+    delete temporarySource._id;
+
+    super({
+      document: new CONFIG.ActiveEffect.documentClass(temporarySource),
+      sheetConfig: false,
+      ownershipConfig: false,
+      canCreate: false
+    });
+
+    this.effectId = existing?._id ?? effectId ?? null;
+    this.folderId = existing?.folder ?? folderId ?? null;
+    this.effectSort = existing?.sort ?? 0;
   }
 
-  #createBlankChange() {
-    return {
-      key: "",
-      mode: CONST.ACTIVE_EFFECT_MODES.ADD ?? 2,
-      value: "",
-      priority: null,
-      phase: ""
-    };
+  get title() {
+    return localize("AEM.EffectSheetTitle");
   }
 
-  #withDisplayChanges(effect) {
-    return {
-      ...effect,
-      changes: effect.changes?.length ? effect.changes : [this.#createBlankChange()]
-    };
-  }
-
-  async _prepareContext() {
-    const existing = this.effectId ? getEffects().find((effect) => effect.id === this.effectId) : null;
-    this.effect = this.#withDisplayChanges(createDefaultEffect(existing ?? { folder: this.folderId }));
-
-    const markSelected = (options, current) => options.map((option) => ({
-      ...option,
-      selected: option.value === current
-    }));
-
-    const modeOptions = getActiveEffectModeOptions();
-    const phaseOptions = [{ value: "", label: "", selected: false }, ...getActiveEffectPhaseOptions()];
-
-    return {
-      effect: {
-        ...this.effect,
-        statusesText: (this.effect.statuses ?? []).join(", "),
-        changes: (this.effect.changes ?? []).map((change) => ({
-          ...change,
-          modeOptions: markSelected(modeOptions, change.mode),
-          phaseOptions: markSelected(phaseOptions, change.phase ?? "")
-        }))
-      },
-      typeOptions: markSelected(getActiveEffectTypeOptions(), this.effect.type),
-      showIconOptions: markSelected(getShowIconOptions(), this.effect.showIcon)
-    };
+  async _preparePartContext(partId, context) {
+    const partContext = await super._preparePartContext(partId, context);
+    if ( partId === "footer" ) {
+      partContext.buttons = [{
+        type: "submit",
+        icon: "fa-solid fa-floppy-disk",
+        label: "AEM.Save"
+      }];
+    }
+    return partContext;
   }
 
   async _onRender(context, options) {
     await super._onRender(context, options);
 
-    const element = this.element;
-    const form = element.querySelector("form");
-    if (!form) return;
+    const originInput = this.form?.querySelector("input[name='origin']");
+    if ( !originInput ) return;
 
-    form.addEventListener("submit", this.#onSubmit.bind(this));
-    element.querySelector("[data-action='add-change']")?.addEventListener("click", this.#onAddChange.bind(this));
-    for (const button of element.querySelectorAll("[data-action='remove-change']")) {
-      button.addEventListener("click", this.#onRemoveChange.bind(this));
-    }
+    originInput.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      originInput.classList.add("aem-drop-highlight");
+    });
+
+    originInput.addEventListener("dragleave", () => {
+      originInput.classList.remove("aem-drop-highlight");
+    });
+
+    originInput.addEventListener("drop", (event) => {
+      event.preventDefault();
+      originInput.classList.remove("aem-drop-highlight");
+      const data = TextEditor.getDragEventData(event);
+      const uuid = data?.uuid ?? data?.documentUuid ?? null;
+      if ( !uuid ) return;
+      originInput.value = uuid;
+      originInput.dispatchEvent(new Event("change", { bubbles: true }));
+    });
   }
 
-  async #onSubmit(event) {
-    event.preventDefault();
+  async _processSubmitData(event, form, submitData, options = {}) {
+    const source = this.#prepareSource(submitData);
+    this.document.updateSource(source);
+
+    const stored = foundry.utils.deepClone(this.document._source);
+    stored._id = this.effectId ?? foundry.utils.randomID();
+    stored.folder = this.folderId;
 
     const effects = getEffects();
-    const existing = effects.find((effect) => effect.id === this.effectId);
-    const updated = this.#collectEffectData(event.currentTarget);
-
-    if (existing) {
-      const index = effects.findIndex((effect) => effect.id === existing.id);
-      effects[index] = updated;
-    } else {
-      const siblings = effects.filter((effect) => (effect.folder ?? null) === (updated.folder ?? null));
-      updated.sort = nextSortValue(siblings);
-      effects.push(updated);
-      this.effectId = updated.id;
+    const existingIndex = effects.findIndex((effect) => effect._id === stored._id);
+    if ( existingIndex >= 0 ) effects[existingIndex] = stored;
+    else {
+      stored.sort = nextSortValue(effects.filter((effect) => (effect.folder ?? null) === (stored.folder ?? null)));
+      effects.push(stored);
+      this.effectId = stored._id;
+      this.effectSort = stored.sort;
     }
 
     await setEffects(effects);
@@ -122,59 +125,71 @@ export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(Applic
     await this.close();
   }
 
-  async #onAddChange(event) {
-    event.preventDefault();
-    const form = this.element.querySelector("form");
-    const effect = this.#collectEffectData(form);
-    effect.changes.push(this.#createBlankChange());
-    this.effect = this.#withDisplayChanges(effect);
+  async _addChangeRow() {
+    const source = this.#getTransientSource();
+    source.system.changes.push(this.document.system.schema.fields.changes.element.getInitialValue());
+    this.document.updateSource(source);
     await this.render({ force: true });
   }
 
-  async #onRemoveChange(event) {
-    event.preventDefault();
-    const index = Number(event.currentTarget.dataset.index);
-    const form = this.element.querySelector("form");
-    const effect = this.#collectEffectData(form);
-    effect.changes.splice(index, 1);
-    this.effect = this.#withDisplayChanges(effect);
+  async _deleteChangeRow(target) {
+    const index = Number(target?.closest("li")?.dataset.index ?? -1);
+    if ( index < 0 ) return;
+    const source = this.#getTransientSource();
+    source.system.changes.splice(index, 1);
+    this.document.updateSource(source);
     await this.render({ force: true });
   }
 
-  #collectEffectData(form) {
-    const rows = [...form.querySelectorAll(".aem-change-row")].map((row) => ({
-      key: stringOrEmpty(row.querySelector("[name='change-key']")?.value),
-      mode: Number(row.querySelector("[name='change-mode']")?.value ?? 0),
-      value: row.querySelector("[name='change-value']")?.value ?? "",
-      priority: numericOrNull(row.querySelector("[name='change-priority']")?.value),
-      phase: stringOrEmpty(row.querySelector("[name='change-phase']")?.value)
-    }));
+  #getTransientSource() {
+    const source = foundry.utils.deepClone(this.document._source);
+    const form = this.form;
+    if ( !form ) {
+      source.system.changes ??= [];
+      return source;
+    }
 
-    return createDefaultEffect({
-      id: this.effectId ?? foundry.utils.randomID(),
-      folder: form.querySelector("[name='folder']")?.value || null,
-      sort: this.effect.sort ?? 0,
-      name: stringOrEmpty(form.querySelector("[name='name']")?.value),
-      img: stringOrEmpty(form.querySelector("[name='img']")?.value),
-      description: form.querySelector("[name='description']")?.value ?? "",
-      origin: stringOrEmpty(form.querySelector("[name='origin']")?.value),
-      tint: stringOrEmpty(form.querySelector("[name='tint']")?.value),
-      disabled: form.querySelector("[name='disabled']")?.checked ?? false,
-      transfer: form.querySelector("[name='transfer']")?.checked ?? false,
-      statuses: normalizeStatuses(form.querySelector("[name='statuses']")?.value),
-      type: stringOrEmpty(form.querySelector("[name='type']")?.value),
-      showIcon: Number(form.querySelector("[name='showIcon']")?.value ?? 1),
-      duration: {
-        seconds: numericOrNull(form.querySelector("[name='duration.seconds']")?.value),
-        rounds: numericOrNull(form.querySelector("[name='duration.rounds']")?.value),
-        turns: numericOrNull(form.querySelector("[name='duration.turns']")?.value)
-      },
-      start: {
-        time: numericOrNull(form.querySelector("[name='start.time']")?.value),
-        round: numericOrNull(form.querySelector("[name='start.round']")?.value),
-        turn: numericOrNull(form.querySelector("[name='start.turn']")?.value)
-      },
-      changes: rows.filter((row) => row.key || row.value || row.phase || Number.isFinite(row.priority))
+    const formData = new FormDataExtended(form);
+    const submitData = this._processFormData(null, form, formData);
+    const prepared = this.#prepareSource(submitData);
+    return foundry.utils.mergeObject(source, prepared, { inplace: false, insertKeys: true, insertValues: true });
+  }
+
+  #prepareSource(submitData) {
+    const source = foundry.utils.deepClone(submitData);
+    source.system ??= {};
+    source.system.changes = foundry.utils.isPlainObject(source.system.changes)
+      ? Object.values(source.system.changes)
+      : Array.isArray(source.system.changes)
+        ? source.system.changes
+        : [];
+
+    source.system.changes = source.system.changes.filter((change) => {
+      return change.key || (change.value !== "") || Number.isFinite(change.priority);
     });
+
+    source.statuses = Array.from(source.statuses ?? []);
+    source.origin ||= null;
+    source.duration ??= {};
+    source.duration.value ??= null;
+    source.duration.units ??= "seconds";
+    source.duration.expiry ??= null;
+    source.duration.expired = false;
+    source.start = null;
+    source.transfer = false;
+    source.folder = this.folderId;
+    source.sort = this.effectSort;
+    const prepared = createDefaultEffect(source);
+    delete prepared._id;
+    return prepared;
+  }
+
+  static async #onAddChange() {
+    return this._addChangeRow();
+  }
+
+  static async #onDeleteChange(_event, target) {
+    return this._deleteChangeRow(target);
   }
 }
+

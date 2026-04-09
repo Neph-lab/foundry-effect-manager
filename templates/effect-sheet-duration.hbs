@@ -1,0 +1,22 @@
+<section class="tab{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+    <fieldset>
+        <legend>{{localize "AEM.EffectStart"}}</legend>
+        <p class="hint">{{localize "AEM.EffectStartHint"}}</p>
+    </fieldset>
+
+    <fieldset>
+        <legend>{{localize "EFFECT.DURATION.Header"}}</legend>
+        <div class="form-group slim duration" data-duration>
+            <label class="flexrow" for="{{rootId}}-duration.value">
+                <span>{{localize "AEM.EffectDuration"}}</span>
+            </label>
+            <div class="form-fields">
+                {{formInput fields.duration.fields.value value=source.duration.value id=(concat rootId "-duration.value")
+                            aria=(object label=(localize "EFFECT.FIELDS.duration.value.label"))}}
+                {{formInput fields.duration.fields.units value=source.duration.units id=(concat rootId "-duration.units")
+                            options=durationUnits aria=(object label=(localize "EFFECT.FIELDS.duration.units.label"))}}
+            </div>
+        </div>
+        {{formGroup fields.duration.fields.expiry choices=expiryEvents value=source.duration.expiry rootId=rootId label="AEM.ExpiryEvent"}}
+    </fieldset>
+</section>

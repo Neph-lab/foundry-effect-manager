@@ -80,69 +80,13 @@
   color: var(--color-text-secondary);
 }
 
-.foundry-effect-manager.aem-sheet {
-  padding: 0.75rem;
+.foundry-effect-manager.aem-sheet .tab fieldset + fieldset {
+  margin-top: 0.75rem;
 }
 
-.foundry-effect-manager .aem-section-header,
-.foundry-effect-manager .aem-sheet-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.foundry-effect-manager .aem-sheet-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.foundry-effect-manager .aem-sheet-grid > h3 {
-  margin: 0;
-}
-
-.foundry-effect-manager .aem-span-two {
-  grid-column: 1 / -1;
-}
-
-.foundry-effect-manager .aem-checkbox-group {
-  align-self: end;
-}
-
-.foundry-effect-manager .aem-change-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.foundry-effect-manager .aem-change-row {
-  display: grid;
-  grid-template-columns: 1.4fr 0.9fr 1fr 0.8fr 0.9fr auto;
-  gap: 0.4rem;
-  align-items: center;
-}
-
-.foundry-effect-manager .aem-change-header {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-12);
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-}
-
-.foundry-effect-manager .aem-sheet-footer {
-  justify-content: flex-end;
-  margin-top: 1rem;
-}
-
-@media (max-width: 720px) {
-  .foundry-effect-manager .aem-sheet-grid,
-  .foundry-effect-manager .aem-change-row {
-    grid-template-columns: 1fr;
-  }
+.foundry-effect-manager.aem-sheet input.aem-drop-highlight {
+  outline: 2px solid var(--color-border-highlight);
+  outline-offset: 1px;
 }
 
 #sidebar #sidebar-tabs [data-tab="activeEffects"].aem-sidebar-icon {

@@ -2,7 +2,7 @@
   "id": "foundry-effect-manager",
   "title": "Active Effects Manager",
   "description": "Create, organize, and apply standalone Active Effect templates from a dedicated sidebar tab.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "authors": [
     {
       "name": "Neph-lab"
@@ -25,7 +25,16 @@
       "path": "lang/en.json"
     }
   ],
-  "url": "https://raw.githubusercontent.com/Neph-lab/foundry-effect-manager",
+  "relationships": {
+    "requires": [
+      {
+        "id": "lib-dfreds-ui-extender",
+        "type": "module",
+        "manifest": "https://github.com/DFreds/lib-dfreds-ui-extender/releases/latest/download/module.json"
+      }
+    ]
+  },
+  "url": "https://github.com/Neph-lab/foundry-effect-manager",
   "manifest": "https://raw.githubusercontent.com/Neph-lab/foundry-effect-manager/main/module.json",
   "download": "https://github.com/Neph-lab/foundry-effect-manager/archive/refs/heads/main.zip",
   "license": "MIT"

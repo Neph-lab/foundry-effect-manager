@@ -20,14 +20,6 @@ export function stringOrEmpty(value) {
   return String(value ?? "").trim();
 }
 
-export function normalizeStatuses(value) {
-  if (Array.isArray(value)) return value.filter(Boolean);
-  return String(value ?? "")
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
 export function sortByOrder(items) {
   return [...items].sort((a, b) => {
     const sortDelta = (a.sort ?? 0) - (b.sort ?? 0);
@@ -76,7 +68,7 @@ export function buildTree({ folders, effects, expandedFolders, search = "", sear
         effect.name,
         effect.description,
         effect.origin,
-        effect.changes?.map((change) => `${change.key} ${change.value}`).join(" ")
+        effect.system?.changes?.map((change) => `${change.key} ${change.value}`).join(" ")
       ]
       : [effect.name];
 
@@ -96,6 +88,7 @@ export function buildTree({ folders, effects, expandedFolders, search = "", sear
       .filter((effect) => effectMatches(effect))
       .map((effect) => ({
         ...effect,
+        id: effect._id,
         depth: depth + 1
       }));
 
@@ -119,6 +112,7 @@ export function buildTree({ folders, effects, expandedFolders, search = "", sear
     .filter((effect) => effectMatches(effect))
     .map((effect) => ({
       ...effect,
+      id: effect._id,
       depth: 0
     }));
 
@@ -156,7 +150,7 @@ export function isFolderDescendant(folderId, potentialParentId, folders) {
 
 export function applySortUpdate(records, updates) {
   for (const { target, update } of updates) {
-    const record = records.find((entry) => entry.id === target.id);
+    const record = records.find((entry) => entry._id === target._id);
     if (record) record.sort = update.sort;
   }
 }
@@ -173,44 +167,32 @@ export function sortRecord(records, source, siblings, target, { sortBefore = fal
 
 export function sanitizeEffectForApply(effect) {
   const prepared = createDefaultEffect(effect);
-  delete prepared.id;
+  delete prepared._id;
   delete prepared.folder;
   delete prepared.sort;
-  prepared._id = null;
+  delete prepared._stats;
+  prepared.start = null;
+  prepared.duration = foundry.utils.mergeObject(prepared.duration ?? {}, { expired: false }, { inplace: false });
   prepared.flags = foundry.utils.mergeObject(prepared.flags ?? {}, {
     [MODULE_ID]: {
-      sourceEffectId: effect.id,
+      sourceEffectId: effect._id,
       sourceEffectName: effect.name
     }
   });
   return prepared;
 }
 
-export function getActiveEffectTypeOptions() {
-  const labels = CONFIG.ActiveEffect?.typeLabels ?? {};
-  return Object.entries(labels).map(([value, label]) => ({ value, label }));
-}
-
-export function getActiveEffectPhaseOptions() {
-  const phases = CONFIG.ActiveEffect?.phases ?? {};
-  return Object.entries(phases).map(([value, config]) => ({
-    value,
-    label: config.label ?? titleCase(value)
-  }));
-}
-
-export function getActiveEffectModeOptions() {
-  const modes = CONST.ACTIVE_EFFECT_MODES ?? {};
-  return Object.entries(modes).map(([label, value]) => ({
-    value,
-    label: titleCase(label)
-  }));
+export function getActiveEffectChangeTypeOptions() {
+  return Object.entries(CONFIG.ActiveEffect?.changeTypes ?? {})
+    .map(([value, config]) => ({
+      value,
+      label: config.label ?? titleCase(value)
+    }));
 }
 
 export function getShowIconOptions() {
-  return [
-    { value: 0, label: localize("AEM.ShowIconNever") },
-    { value: 1, label: localize("AEM.ShowIconConditional") },
-    { value: 2, label: localize("AEM.ShowIconAlways") }
-  ];
+  return Object.entries(CONST.ACTIVE_EFFECT_SHOW_ICON ?? {}).map(([key, value]) => ({
+    value,
+    label: localize(`EFFECT.SHOW_ICON.${key.toLowerCase()}`)
+  })).reverse();
 }

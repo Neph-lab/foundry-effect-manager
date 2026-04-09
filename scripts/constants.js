@@ -11,41 +11,69 @@ export const SETTINGS_KEYS = {
 
 const DEFAULT_ICON = "icons/svg/aura.svg";
 
-export function createDefaultEffect(data = {}) {
-  const typeLabels = CONFIG.ActiveEffect?.typeLabels ?? {};
-  const defaultType = CONFIG.ActiveEffect?.defaultType ?? Object.keys(typeLabels)[0] ?? "base";
+const LEGACY_CHANGE_MODE_TYPES = {
+  0: "custom",
+  1: "multiply",
+  2: "add",
+  3: "downgrade",
+  4: "upgrade",
+  5: "override"
+};
 
-  return foundry.utils.mergeObject(
-    {
-      id: foundry.utils.randomID(),
-      folder: null,
-      sort: 0,
+export function createDefaultEffect(data = {}) {
+  const defaultType = CONFIG.ActiveEffect?.defaultType ?? CONST.BASE_DOCUMENT_TYPE ?? "base";
+  const documentClass = CONFIG.ActiveEffect?.documentClass;
+  const baseSource = documentClass
+    ? foundry.utils.deepClone(new documentClass({
       name: game.i18n.localize("AEM.CreateEffect"),
       img: DEFAULT_ICON,
-      description: "",
-      origin: "",
-      tint: "",
+      type: data.type ?? defaultType
+    })._source)
+    : {
+      name: game.i18n.localize("AEM.CreateEffect"),
+      img: DEFAULT_ICON,
+      type: data.type ?? defaultType,
+      system: { changes: [] },
       disabled: false,
+      start: null,
+      duration: { value: null, units: "seconds", expiry: null, expired: false },
+      description: "",
+      origin: null,
+      tint: "#ffffff",
       transfer: false,
       statuses: [],
-      type: defaultType,
-      showIcon: 1,
-      duration: {
-        seconds: null,
-        rounds: null,
-        turns: null
-      },
-      start: {
-        time: null,
-        round: null,
-        turn: null
-      },
-      changes: [],
+      showIcon: CONST.ACTIVE_EFFECT_SHOW_ICON?.CONDITIONAL ?? 1,
+      folder: null,
+      sort: 0,
       flags: {}
+    };
+
+  return foundry.utils.mergeObject(baseSource, {
+    _id: foundry.utils.randomID(),
+    name: game.i18n.localize("AEM.CreateEffect"),
+    img: DEFAULT_ICON,
+    type: data.type ?? defaultType,
+    system: {
+      changes: []
     },
-    data,
-    { inplace: false, insertKeys: true, insertValues: true }
-  );
+    disabled: false,
+    start: null,
+    duration: {
+      value: null,
+      units: "seconds",
+      expiry: null,
+      expired: false
+    },
+    description: "",
+    origin: null,
+    tint: "#ffffff",
+    transfer: false,
+    statuses: [],
+    showIcon: CONST.ACTIVE_EFFECT_SHOW_ICON?.CONDITIONAL ?? 1,
+    folder: null,
+    sort: 0,
+    flags: {}
+  }, data, { inplace: false, insertKeys: true, insertValues: true });
 }
 
 export function createDefaultFolder(data = {}) {
@@ -60,6 +88,10 @@ export function createDefaultFolder(data = {}) {
     data,
     { inplace: false, insertKeys: true, insertValues: true }
   );
+}
+
+export function mapLegacyChangeModeToType(mode) {
+  return LEGACY_CHANGE_MODE_TYPES[Number(mode)] ?? `custom.${Number(mode) || 0}`;
 }
 
 export const SORT_DENSITY = CONST.SORT_INTEGER_DENSITY ?? 100000;

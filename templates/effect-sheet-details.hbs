@@ -1,0 +1,16 @@
+<section class="tab scrollable{{#if tab.active}} active{{/if}}" data-group="{{tab.group}}" data-tab="{{tab.id}}">
+    {{formGroup fields.tint value=source.tint rootId=rootId placeholder="#ffffff"}}
+    {{formGroup fields.description value=source.description rootId=rootId}}
+    {{formGroup fields.disabled value=source.disabled rootId=rootId label="AEM.Suspended"}}
+
+    <div class="form-group">
+        <label for="{{rootId}}-origin">{{localize "EFFECT.FIELDS.origin.label"}}</label>
+        <div class="form-fields">
+            {{formInput fields.origin value=source.origin id=(concat rootId "-origin") placeholder=(localize "AEM.OriginPlaceholder")}}
+        </div>
+        <p class="hint">{{localize "AEM.OriginHint"}}</p>
+    </div>
+
+    {{formGroup fields.statuses value=source.statuses options=statuses sort=true rootId=rootId classes="statuses" label="AEM.Conditions"}}
+    {{formGroup fields.showIcon value=source.showIcon options=showIconOptions rootId=rootId label="AEM.IconVisibility"}}
+</section>

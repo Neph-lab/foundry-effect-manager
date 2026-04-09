@@ -52,7 +52,7 @@ function getTokenFromDropEvent(event) {
 }
 
 export async function applyStoredEffectToDocument(effectId, targetDocument, displayName = null) {
-  const effect = getEffects().find((entry) => entry.id === effectId);
+  const effect = getEffects().find((entry) => entry._id === effectId);
   if (!effect) {
     ui.notifications.warn(localize("AEM.NoEffectFound"));
     return false;
