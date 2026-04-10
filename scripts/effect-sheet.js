@@ -104,15 +104,19 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
   async _processSubmitData(event, form, submitData, options = {}) {
     const source = this.#prepareSource(submitData);
     this.document.updateSource(source);
+    return source;
+  }
 
+  async _updateObject(_event, submitData) {
     const stored = foundry.utils.deepClone(this.document._source);
     stored._id = this.effectId ?? foundry.utils.randomID();
     stored.folder = this.folderId;
 
     const effects = getEffects();
     const existingIndex = effects.findIndex((effect) => effect._id === stored._id);
-    if ( existingIndex >= 0 ) effects[existingIndex] = stored;
-    else {
+    if ( existingIndex >= 0 ) {
+      effects[existingIndex] = stored;
+    } else {
       stored.sort = nextSortValue(effects.filter((effect) => (effect.folder ?? null) === (stored.folder ?? null)));
       effects.push(stored);
       this.effectId = stored._id;
@@ -122,7 +126,6 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
     await setEffects(effects);
     ui.notifications.info(localize("AEM.EffectSaved"));
     Hooks.callAll(`${MODULE_ID}.refresh`);
-    await this.close();
   }
 
   async _addChangeRow() {

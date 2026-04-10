@@ -54,7 +54,11 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
       label: "AEM.DeleteEffect",
       icon: "fa-solid fa-trash",
       visible: () => game.user.isGM,
-      onClick: async (_event, target) => this.#deleteEffect(target.closest("[data-entry-id]")?.dataset.entryId)
+      onClick: async (_event, target) => {
+        const entry = target.closest("[data-entry-id], [data-effect-id]");
+        const effectId = entry?.dataset.entryId ?? entry?.dataset.effectId;
+        return this.#deleteEffect(effectId);
+      }
     }];
   }
 
