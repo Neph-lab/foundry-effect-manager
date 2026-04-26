@@ -13,7 +13,8 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
     window: {
       contentClasses: ["standard-form"],
       icon: "fa-solid fa-list-tree",
-      title: "AEM.RealEffectsBrowserTitle"
+      title: "AEM.RealEffectsBrowserTitle",
+      resizable: true
     },
     position: {
       width: 760,

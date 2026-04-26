@@ -14,7 +14,8 @@ export class ActiveEffectTemplateSheet extends HandlebarsApplicationMixin(Applic
     window: {
       contentClasses: ["standard-form"],
       icon: "fa-solid fa-person-rays",
-      title: "AEM.EffectSheetTitle"
+      title: "AEM.EffectSheetTitle",
+      resizable: true
     },
     position: {
       width: 560

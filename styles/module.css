@@ -48,6 +48,10 @@
   object-fit: cover;
 }
 
+.foundry-effect-manager img.thumbnail {
+  max-width: 48px;
+}
+
 .foundry-effect-manager.aem-sidebar .directory-item.entry .entry-name,
 .foundry-effect-manager.aem-sidebar .directory-item.folder .folder-name {
   min-width: 0;
@@ -88,6 +92,11 @@
 .foundry-effect-manager.aem-sheet input.aem-drop-highlight {
   outline: 2px solid var(--color-border-highlight);
   outline-offset: 1px;
+}
+
+.foundry-effect-manager.aem-sheet .window-content,
+.foundry-effect-manager.aem-real-effects-browser-app .window-content {
+  overflow-y: auto;
 }
 
 .foundry-effect-manager.aem-real-effects-browser-app .aem-real-effects-browser {

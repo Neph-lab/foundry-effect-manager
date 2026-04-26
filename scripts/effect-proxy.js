@@ -81,7 +81,7 @@ export class ActiveEffectProxy extends DataModel {
 }
 
 export function createEffectProxy(data = {}) {
-  return new ActiveEffectProxy(data, { strict: false });
+  return new ActiveEffectProxy(prepareProxySource(data), { strict: false });
 }
 
 export function createDefaultEffect(data = {}) {
@@ -99,7 +99,7 @@ export function normalizeStoredEffect(effect) {
 
 function migrateLegacyEffectSource(effect) {
   if (Array.isArray(effect?.system?.changes)) {
-    return foundry.utils.mergeObject(createDefaultEffect(), effect, {
+    return foundry.utils.mergeObject(createDefaultEffect(), prepareProxySource(effect), {
       inplace: false,
       insertKeys: true,
       insertValues: true
@@ -118,7 +118,7 @@ function migrateLegacyEffectSource(effect) {
   }
 
   return {
-    _id: effect._id ?? effect.id ?? foundry.utils.randomID(),
+    _id: nonBlankId(effect._id) ?? nonBlankId(effect.id) ?? foundry.utils.randomID(),
     name: effect.name,
     img: effect.img,
     type: effect.type,
@@ -148,6 +148,18 @@ function migrateLegacyEffectSource(effect) {
     sort: effect.sort ?? 0,
     flags: foundry.utils.deepClone(effect.flags ?? {})
   };
+}
+
+function prepareProxySource(data) {
+  const source = foundry.utils.deepClone(data ?? {});
+  source._id = nonBlankId(source._id) ?? foundry.utils.randomID();
+  return source;
+}
+
+function nonBlankId(value) {
+  if (typeof value !== "string") return value ?? null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
 function mapLegacyChangeModeToType(mode) {

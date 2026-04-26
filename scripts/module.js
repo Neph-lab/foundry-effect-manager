@@ -10,6 +10,7 @@ Hooks.once("uiExtender.init", (uiExtender) => {
     id: TAB_NAME,
     tooltip: "AEM.SidebarTitle",
     icon: "aem-sidebar-icon",
+    order: 6,
     applicationClass: ActiveEffectsSidebarTab
   });
 });
