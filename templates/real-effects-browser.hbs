@@ -1,0 +1,62 @@
+<section class="aem-real-effects-browser flexcol">
+  <header class="aem-real-effects-controls">
+    <div class="header-actions action-buttons flexrow">
+      <button type="button" data-action="loadSelected">
+        <i class="fa-solid fa-location-crosshairs" inert></i>
+        <span>{{localize "AEM.RealEffectsLoadSelected"}}</span>
+      </button>
+    </div>
+
+    <div class="form-group">
+      <label for="{{partId}}-uuid">{{localize "AEM.RealEffectsUuidLabel"}}</label>
+      <div class="form-fields">
+        <input id="{{partId}}-uuid" type="text" name="documentUuid" value="{{documentUuid}}" placeholder="{{localize 'AEM.RealEffectsUuidPlaceholder'}}">
+        <button type="button" data-action="loadUuid">
+          <i class="fa-solid fa-link" inert></i>
+          <span>{{localize "AEM.RealEffectsLoadUuid"}}</span>
+        </button>
+      </div>
+    </div>
+
+    {{#if targetLoaded}}
+      <p class="hint">{{localize "AEM.RealEffectsTargetLoaded" type=targetType name=targetName}}</p>
+      <p class="hint">{{targetUuid}}</p>
+    {{else}}
+      <p class="hint">{{localize "AEM.RealEffectsHint"}}</p>
+    {{/if}}
+  </header>
+
+  <section class="aem-real-effects-list directory scrollable">
+    {{#if targetLoaded}}
+      {{#if hasEffects}}
+        <ol class="directory-list plain">
+          {{#each effects as |effect|}}
+            <li class="directory-item entry document item flexrow" data-effect-id="{{effect.id}}">
+              <img class="thumbnail" src="{{effect.img}}" alt="{{effect.name}}" loading="lazy">
+              <div class="entry-name">
+                <a class="ellipsis" data-action="openEffect" data-effect-id="{{effect.id}}">{{effect.name}}</a>
+                <div class="aem-real-effect-origin ellipsis">{{effect.originDisplay}}</div>
+              </div>
+              <div class="aem-real-effect-actions flexrow">
+                <button type="button" class="icon" data-action="openEffect" data-effect-id="{{effect.id}}" aria-label="{{localize 'AEM.EditEffectShortcut'}}">
+                  <i class="fa-solid fa-pen-to-square" inert></i>
+                </button>
+                <button type="button" class="icon" data-action="deleteEffect" data-effect-id="{{effect.id}}" aria-label="{{localize 'AEM.DeleteEffect'}}">
+                  <i class="fa-solid fa-trash" inert></i>
+                </button>
+              </div>
+            </li>
+          {{/each}}
+        </ol>
+      {{else}}
+        <div class="aem-empty">
+          <p>{{localize "AEM.RealEffectsEmpty"}}</p>
+        </div>
+      {{/if}}
+    {{else}}
+      <div class="aem-empty">
+        <p>{{localize "AEM.RealEffectsNotLoaded"}}</p>
+      </div>
+    {{/if}}
+  </section>
+</section>

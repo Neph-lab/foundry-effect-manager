@@ -1,5 +1,6 @@
 .foundry-effect-manager.aem-sidebar,
-.foundry-effect-manager.aem-sheet {
+.foundry-effect-manager.aem-sheet,
+.foundry-effect-manager.aem-real-effects-browser-app {
   color: var(--color-text-primary);
 }
 
@@ -87,6 +88,45 @@
 .foundry-effect-manager.aem-sheet input.aem-drop-highlight {
   outline: 2px solid var(--color-border-highlight);
   outline-offset: 1px;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effects-browser {
+  gap: 0.75rem;
+  height: 100%;
+  padding: 0.75rem;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effects-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effects-controls .header-actions {
+  margin: 0;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effects-list {
+  min-height: 0;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .directory-item .entry-name {
+  min-width: 0;
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effect-origin {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-12);
+}
+
+.foundry-effect-manager.aem-real-effects-browser-app .aem-real-effect-actions {
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.foundry-effect-manager .form-footer .aem-create-proxy {
+  margin-right: auto;
 }
 
 #sidebar #sidebar-tabs [data-tab="activeEffects"].aem-sidebar-icon {

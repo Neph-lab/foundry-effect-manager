@@ -1,4 +1,6 @@
-import { MODULE_ID, SETTINGS_KEYS, createDefaultEffect, mapLegacyChangeModeToType } from "./constants.js";
+import { MODULE_ID, SETTINGS_KEYS } from "./constants.js";
+import { createEffectProxy, normalizeStoredEffect } from "./effect-proxy.js";
+import { nextSortValue } from "./helpers.js";
 
 export function registerSettings() {
   game.settings.register(MODULE_ID, SETTINGS_KEYS.effects, {
@@ -54,65 +56,24 @@ export async function migrateEffects() {
   if ( changed ) await game.settings.set(MODULE_ID, SETTINGS_KEYS.effects, migrated);
 }
 
-function normalizeStoredEffect(effect) {
-  if ( !effect ) return createDefaultEffect();
+export async function addEffectProxyFromDocument(effect, { folderId = null } = {}) {
+  const source = effect.toObject();
+  delete source._id;
+  delete source._stats;
+  delete source.start;
+  delete source.parent;
 
-  const isCurrent = Array.isArray(effect?.system?.changes);
-  if ( isCurrent ) {
-    const normalized = createDefaultEffect(effect);
-    normalized.statuses = Array.from(normalized.statuses ?? []);
-    normalized.system ??= {};
-    normalized.system.changes ??= [];
-    normalized.duration ??= {};
-    normalized.duration.value ??= null;
-    normalized.duration.units ??= "seconds";
-    normalized.duration.expiry ??= null;
-    normalized.duration.expired ??= false;
-    normalized.start ??= null;
-    normalized.transfer ??= false;
-    return normalized;
-  }
+  const proxy = createEffectProxy({
+    ...source,
+    _id: foundry.utils.randomID(),
+    folder: folderId,
+    sort: 0,
+    transfer: false
+  }).toObject();
 
-  const legacyDuration = effect.duration ?? {};
-  let durationValue = null;
-  let durationUnits = "seconds";
-  for ( const unit of CONST.ACTIVE_EFFECT_DURATION_UNITS ) {
-    if ( Number.isFinite(legacyDuration[unit]) ) {
-      durationValue = Number(legacyDuration[unit]);
-      durationUnits = unit;
-      break;
-    }
-  }
-
-  return createDefaultEffect({
-    _id: effect._id ?? effect.id ?? foundry.utils.randomID(),
-    folder: effect.folder ?? null,
-    sort: effect.sort ?? 0,
-    name: effect.name,
-    img: effect.img,
-    type: effect.type,
-    disabled: effect.disabled ?? false,
-    start: null,
-    duration: {
-      value: durationValue,
-      units: durationUnits,
-      expiry: effect.duration?.expiry ?? null,
-      expired: false
-    },
-    description: effect.description ?? "",
-    origin: effect.origin || null,
-    tint: effect.tint || "#ffffff",
-    transfer: effect.transfer ?? false,
-    statuses: Array.from(effect.statuses ?? []),
-    showIcon: effect.showIcon,
-    system: {
-      changes: (effect.changes ?? []).map((change) => ({
-        key: change.key ?? "",
-        type: change.type ?? mapLegacyChangeModeToType(change.mode),
-        value: change.value ?? "",
-        priority: Number.isFinite(change.priority) ? change.priority : null
-      }))
-    },
-    flags: foundry.utils.deepClone(effect.flags ?? {})
-  });
+  const effects = getEffects();
+  proxy.sort = nextSortValue(effects.filter((entry) => (entry.folder ?? null) === (folderId ?? null)));
+  effects.push(proxy);
+  await setEffects(effects);
+  return proxy;
 }

@@ -1,4 +1,5 @@
-import { MODULE_ID, SORT_DENSITY, createDefaultEffect } from "./constants.js";
+import { MODULE_ID, SORT_DENSITY } from "./constants.js";
+import { createEffectProxy } from "./effect-proxy.js";
 
 export function localize(key, data) {
   return data ? game.i18n.format(key, data) : game.i18n.localize(key);
@@ -166,28 +167,29 @@ export function sortRecord(records, source, siblings, target, { sortBefore = fal
 }
 
 export function sanitizeEffectForApply(effect) {
-  const prepared = createDefaultEffect(effect);
+  const proxy = createEffectProxy(effect);
+  const prepared = proxy.toObject();
   delete prepared._id;
   delete prepared.folder;
   delete prepared.sort;
-  delete prepared._stats;
+  delete prepared.start;
   prepared.start = null;
   prepared.duration = foundry.utils.mergeObject(prepared.duration ?? {}, { expired: false }, { inplace: false });
+  prepared.transfer = false;
   prepared.flags = foundry.utils.mergeObject(prepared.flags ?? {}, {
     [MODULE_ID]: {
-      sourceEffectId: effect._id,
-      sourceEffectName: effect.name
+      sourceEffectId: proxy._id,
+      sourceEffectName: proxy.name
     }
-  });
-  return prepared;
+  }, { inplace: false });
+  return new CONFIG.ActiveEffect.documentClass(prepared, { strict: false }).toObject();
 }
 
 export function getActiveEffectChangeTypeOptions() {
-  return Object.entries(CONFIG.ActiveEffect?.changeTypes ?? {})
-    .map(([value, config]) => ({
-      value,
-      label: config.label ?? titleCase(value)
-    }));
+  const documentClass = CONFIG.ActiveEffect?.documentClass;
+  return Object.entries(documentClass?.CHANGE_TYPES ?? {})
+    .map(([value, config]) => ({ value, label: game.i18n.localize(config.label ?? titleCase(value)) }))
+    .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
 }
 
 export function getShowIconOptions() {

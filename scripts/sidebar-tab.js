@@ -15,6 +15,7 @@ import {
   sortByOrder,
   sortRecord
 } from "./helpers.js";
+import { openRealEffectsBrowser } from "./real-effects-browser.js";
 
 const { HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 const { AbstractSidebarTab } = foundry.applications.sidebar;
@@ -95,7 +96,8 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
       searchMode: this.#getSearchModeContext(),
       sortMode: this.#getSortModeContext(),
       folderIcon: CONFIG.Folder?.sidebarIcon ?? "fa-solid fa-folder",
-      effectCreateIcon: "fa-solid fa-arrows-spin"
+      effectCreateIcon: "fa-solid fa-arrows-spin",
+      browseEffectsIcon: "fa-solid fa-list-tree"
     };
   }
 
@@ -121,6 +123,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
 
     element.querySelector("[data-action='create-effect']")?.addEventListener("click", () => this.#openEffectSheet());
     element.querySelector("[data-action='create-folder']")?.addEventListener("click", () => this.#createFolder());
+    element.querySelector("[data-action='browse-real-effects']")?.addEventListener("click", () => openRealEffectsBrowser());
     element.querySelector("[data-action='toggle-search-mode']")?.addEventListener("click", () => this.#toggleSearchMode());
     element.querySelector("[data-action='toggle-sort-mode']")?.addEventListener("click", () => this.#toggleSortMode());
     element.querySelector("[data-action='collapse-folders']")?.addEventListener("click", () => this.#collapseFolders());

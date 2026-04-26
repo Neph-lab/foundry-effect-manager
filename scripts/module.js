@@ -1,5 +1,6 @@
 import { MODULE_ID, TAB_NAME } from "./constants.js";
 import { registerDropHandlers, applyStoredEffectToDocument } from "./apply-effects.js";
+import { openRealEffectsBrowser, registerRealEffectsHooks } from "./real-effects-browser.js";
 import { ActiveEffectsSidebarTab } from "./sidebar-tab.js";
 import { getEffects, getFolders, migrateEffects, registerSettings } from "./store.js";
 
@@ -20,6 +21,7 @@ Hooks.once("init", () => {
     applyStoredEffectToDocument,
     getEffects,
     getFolders,
+    openRealEffectsBrowser,
     openTab: () => ui.sidebar?.changeTab?.(TAB_NAME, "primary")
   };
 });
@@ -27,4 +29,5 @@ Hooks.once("init", () => {
 Hooks.once("ready", async () => {
   await migrateEffects();
   registerDropHandlers();
+  registerRealEffectsHooks();
 });
