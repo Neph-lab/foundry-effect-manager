@@ -65,7 +65,7 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
 
   async _preparePartContext(partId, context) {
     const partContext = await super._preparePartContext(partId, context);
-    if ( partId === "footer" ) {
+    if (partId === "footer") {
       partContext.buttons = [{
         type: "submit",
         icon: "fa-solid fa-floppy-disk",
@@ -79,7 +79,7 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
     await super._onRender(context, options);
 
     const originInput = this.form?.querySelector("input[name='origin']");
-    if ( !originInput ) return;
+    if (!originInput) return;
 
     originInput.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -95,26 +95,23 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
       originInput.classList.remove("aem-drop-highlight");
       const data = TextEditor.getDragEventData(event);
       const uuid = data?.uuid ?? data?.documentUuid ?? null;
-      if ( !uuid ) return;
+      if (!uuid) return;
       originInput.value = uuid;
       originInput.dispatchEvent(new Event("change", { bubbles: true }));
     });
   }
 
-  async _processSubmitData(event, form, submitData, options = {}) {
+  async _processSubmitData(_event, _form, submitData, _options = {}) {
     const source = this.#prepareSource(submitData);
     this.document.updateSource(source);
-    return source;
-  }
 
-  async _updateObject(_event, submitData) {
     const stored = foundry.utils.deepClone(this.document._source);
     stored._id = this.effectId ?? foundry.utils.randomID();
     stored.folder = this.folderId;
 
     const effects = getEffects();
     const existingIndex = effects.findIndex((effect) => effect._id === stored._id);
-    if ( existingIndex >= 0 ) {
+    if (existingIndex >= 0) {
       effects[existingIndex] = stored;
     } else {
       stored.sort = nextSortValue(effects.filter((effect) => (effect.folder ?? null) === (stored.folder ?? null)));
@@ -126,6 +123,7 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
     await setEffects(effects);
     ui.notifications.info(localize("AEM.EffectSaved"));
     Hooks.callAll(`${MODULE_ID}.refresh`);
+    await this.close();
   }
 
   async _addChangeRow() {
@@ -137,7 +135,7 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
 
   async _deleteChangeRow(target) {
     const index = Number(target?.closest("li")?.dataset.index ?? -1);
-    if ( index < 0 ) return;
+    if (index < 0) return;
     const source = this.#getTransientSource();
     source.system.changes.splice(index, 1);
     this.document.updateSource(source);
@@ -145,32 +143,34 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
   }
 
   #getTransientSource() {
-    const source = foundry.utils.deepClone(this.document._source);
     const form = this.form;
-    if ( !form ) {
+    if (!form) {
+      const source = foundry.utils.deepClone(this.document._source);
       source.system.changes ??= [];
       return source;
     }
 
     const formData = new FormDataExtended(form);
     const submitData = this._processFormData(null, form, formData);
-    const prepared = this.#prepareSource(submitData);
-    return foundry.utils.mergeObject(source, prepared, { inplace: false, insertKeys: true, insertValues: true });
+    return this.#prepareSource(submitData);
   }
 
   #prepareSource(submitData) {
-    const source = foundry.utils.deepClone(submitData);
-    source.system ??= {};
-    source.system.changes = foundry.utils.isPlainObject(source.system.changes)
-      ? Object.values(source.system.changes)
-      : Array.isArray(source.system.changes)
-        ? source.system.changes
+    const source = foundry.utils.deepClone(this.document._source);
+    const changes = foundry.utils.deepClone(submitData);
+
+    changes.system ??= {};
+    changes.system.changes = foundry.utils.isPlainObject(changes.system.changes)
+      ? Object.values(changes.system.changes)
+      : Array.isArray(changes.system.changes)
+        ? changes.system.changes
         : [];
 
-    source.system.changes = source.system.changes.filter((change) => {
+    changes.system.changes = changes.system.changes.filter((change) => {
       return change.key || (change.value !== "") || Number.isFinite(change.priority);
     });
 
+    foundry.utils.mergeObject(source, changes, { inplace: true, insertKeys: true, insertValues: true });
     source.statuses = Array.from(source.statuses ?? []);
     source.origin ||= null;
     source.duration ??= {};
@@ -182,6 +182,7 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
     source.transfer = false;
     source.folder = this.folderId;
     source.sort = this.effectSort;
+
     const prepared = createDefaultEffect(source);
     delete prepared._id;
     return prepared;
@@ -195,4 +196,3 @@ export class ActiveEffectTemplateSheet extends ActiveEffectConfig {
     return this._deleteChangeRow(target);
   }
 }
-

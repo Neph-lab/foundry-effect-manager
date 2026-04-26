@@ -2,7 +2,7 @@
   "id": "foundry-effect-manager",
   "title": "Active Effects Manager",
   "description": "Create, organize, and apply standalone Active Effect templates from a dedicated sidebar tab.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "authors": [
     {
       "name": "Neph-lab"
