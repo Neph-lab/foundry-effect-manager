@@ -79,7 +79,7 @@
   "AEM.RealEffectsNoSelectedActor": "Select a Token with an Actor first.",
   "AEM.RealEffectsUuidRequired": "Enter an Actor or Item UUID first.",
   "AEM.RealEffectsInvalidTarget": "The provided UUID must resolve to an Actor or Item.",
-  "AEM.RealEffectsGmOnly": "Only a GM can use this browser.",
+  "AEM.RealEffectsGmOnly": "Only a GM or Assistant GM can use this browser.",
   "AEM.NoOrigin": "No origin",
   "AEM.EditEffectShortcut": "Open Effect",
   "AEM.CreateProxyFromEffect": "Create Proxy Copy",

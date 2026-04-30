@@ -9,6 +9,7 @@ import { ActiveEffectTemplateSheet } from "./effect-sheet.js";
 import { getEffects, getExpandedFolders, getFolders, setEffects, setExpandedFolders, setFolders } from "./store.js";
 import {
   buildTree,
+  canManageActiveEffects,
   isFolderDescendant,
   localize,
   nextSortValue,
@@ -50,11 +51,15 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     return localize("AEM.SidebarTitle");
   }
 
+  _canRender() {
+    return canManageActiveEffects();
+  }
+
   _getEntryContextOptions() {
     return [{
       label: "AEM.DeleteEffect",
       icon: "fa-solid fa-trash",
-      visible: () => game.user.isGM,
+      visible: () => canManageActiveEffects(),
       onClick: async (_event, target) => {
         const entry = target.closest("[data-entry-id], [data-effect-id]");
         const effectId = entry?.dataset.entryId ?? entry?.dataset.effectId;
@@ -67,12 +72,12 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     return [{
       label: "AEM.EditFolder",
       icon: "fa-solid fa-pen",
-      visible: () => game.user.isGM,
+      visible: () => canManageActiveEffects(),
       onClick: async (_event, target) => this.#editFolder(target.closest("[data-folder-id]")?.dataset.folderId)
     }, {
       label: "AEM.DeleteFolder",
       icon: "fa-solid fa-trash",
-      visible: () => game.user.isGM,
+      visible: () => canManageActiveEffects(),
       onClick: async (_event, target) => this.#deleteFolder(target.closest("[data-folder-id]")?.dataset.folderId)
     }];
   }
@@ -88,7 +93,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     });
 
     return {
-      canManage: game.user.isGM,
+      canManage: canManageActiveEffects(),
       hasContent: !!(tree.rootFolders.length || tree.rootEffects.length),
       rootFolders: tree.rootFolders,
       rootEffects: tree.rootEffects,
@@ -119,7 +124,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
     await super._onRender(context, options);
 
     const element = this.element;
-    const canManualSort = game.user.isGM && this.sortMode === "manual";
+    const canManualSort = canManageActiveEffects() && this.sortMode === "manual";
 
     element.querySelector("[data-action='create-effect']")?.addEventListener("click", () => this.#openEffectSheet());
     element.querySelector("[data-action='create-folder']")?.addEventListener("click", () => this.#createFolder());
@@ -158,7 +163,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
       if (canManualSort) row.addEventListener("dragstart", (event) => this.#onEffectDragStart(event, row.dataset.entryId));
     }
 
-    if (game.user.isGM) {
+    if (canManageActiveEffects()) {
       for (const folder of element.querySelectorAll(".directory-item.folder")) {
         folder.draggable = canManualSort;
         if (canManualSort) folder.addEventListener("dragstart", (event) => this.#onFolderDragStart(event, folder.dataset.folderId));
@@ -229,7 +234,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #createFolder(parentFolderId = null) {
-    if (!game.user.isGM) return;
+    if (!canManageActiveEffects()) return;
     const folder = await this.#promptFolder(createDefaultFolder({ folder: parentFolderId || null }));
     if (!folder) return;
 
@@ -242,7 +247,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #editFolder(folderId) {
-    if (!game.user.isGM || !folderId) return;
+    if (!canManageActiveEffects() || !folderId) return;
     const folders = getFolders();
     const folder = folders.find((entry) => entry.id === folderId);
     if (!folder) return;
@@ -257,7 +262,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #deleteFolder(folderId) {
-    if (!game.user.isGM || !folderId) return;
+    if (!canManageActiveEffects() || !folderId) return;
     const folders = getFolders();
     const folder = folders.find((entry) => entry.id === folderId);
     if (!folder) return;
@@ -283,7 +288,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
   }
 
   async #deleteEffect(effectId) {
-    if (!game.user.isGM || !effectId) return;
+    if (!canManageActiveEffects() || !effectId) return;
     const effects = getEffects();
     const effect = effects.find((entry) => entry._id === effectId);
     if (!effect) return;
@@ -358,7 +363,7 @@ export class ActiveEffectsSidebarTab extends HandlebarsApplicationMixin(Abstract
 
   async #onDrop(event) {
     event.preventDefault();
-    if (!game.user.isGM || this.sortMode !== "manual") return;
+    if (!canManageActiveEffects() || this.sortMode !== "manual") return;
 
     const data = TextEditor.getDragEventData(event);
     const dropTarget = event.currentTarget;

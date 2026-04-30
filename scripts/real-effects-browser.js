@@ -1,5 +1,5 @@
 import { MODULE_ID } from "./constants.js";
-import { localize } from "./helpers.js";
+import { canManageActiveEffects, localize } from "./helpers.js";
 import { addEffectProxyFromDocument } from "./store.js";
 
 const { ApplicationV2, DialogV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -47,7 +47,7 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   _canRender() {
-    if (!game.user.isGM) throw new Error(localize("AEM.RealEffectsGmOnly"));
+    if (!canManageActiveEffects()) throw new Error(localize("AEM.RealEffectsGmOnly"));
   }
 
   async _prepareContext() {
@@ -60,7 +60,7 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
     }));
 
     return {
-      canManage: game.user.isGM,
+      canManage: canManageActiveEffects(),
       documentUuid: this.documentUuid,
       targetLoaded: !!this.targetDocument,
       targetName: this.targetDocument?.name ?? "",
@@ -72,7 +72,7 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   async loadSelectedTokenActor() {
-    if (!game.user.isGM) return;
+    if (!canManageActiveEffects()) return;
     const actor = canvas.tokens?.controlled?.[0]?.actor ?? null;
     if (!actor) {
       ui.notifications.warn(localize("AEM.RealEffectsNoSelectedActor"));
@@ -83,7 +83,7 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   async loadUuidTarget(uuid) {
-    if (!game.user.isGM) return;
+    if (!canManageActiveEffects()) return;
     const trimmed = String(uuid ?? "").trim();
     if (!trimmed) {
       ui.notifications.warn(localize("AEM.RealEffectsUuidRequired"));
@@ -171,7 +171,7 @@ export class RealEffectsBrowser extends HandlebarsApplicationMixin(ApplicationV2
 }
 
 export function openRealEffectsBrowser(options = {}) {
-  if (!game.user.isGM) {
+  if (!canManageActiveEffects()) {
     ui.notifications.warn(localize("AEM.RealEffectsGmOnly"));
     return null;
   }
@@ -188,7 +188,7 @@ export function openRealEffectsBrowser(options = {}) {
 export function registerRealEffectsHooks() {
   Hooks.on("renderApplicationV2", (app, element) => {
     if (!(app instanceof ActiveEffectConfig)) return;
-    if (!game.user.isGM) return;
+    if (!canManageActiveEffects()) return;
     if (!["Actor", "Item"].includes(app.document?.parent?.documentName)) return;
     injectCreateProxyButton(app, element);
   });

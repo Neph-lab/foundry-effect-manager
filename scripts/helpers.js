@@ -5,6 +5,10 @@ export function localize(key, data) {
   return data ? game.i18n.format(key, data) : game.i18n.localize(key);
 }
 
+export function canManageActiveEffects(user = game.user) {
+  return !!user && (user.isGM || user.hasRole?.(CONST.USER_ROLES.ASSISTANT));
+}
+
 export function titleCase(value) {
   return String(value ?? "")
     .replace(/[_-]+/g, " ")
